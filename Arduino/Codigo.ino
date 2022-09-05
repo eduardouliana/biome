@@ -30,6 +30,8 @@ unsigned long dataMillis = 0;
 int count = 0;
 int count02 = 0;
 
+String ID_FIXO = "43803050-223c-11ed-8a48-e1d138bf087e";
+
 void setup()
 {
 
@@ -72,8 +74,7 @@ void setup()
     Firebase.reconnectWiFi(true);
 }
 
-void loop()
-{
+void loop(){
     if (Firebase.ready()){
         //digitalWrite(led1, HIGH);
         //bool sensor = digitalRead(pinSensor);
@@ -81,27 +82,25 @@ void loop()
         
         delay(5000);
         
-        ////if(!sensor){
         if(true){
             //digitalWrite(led2, HIGH);
-            IncrementarValorFirebase("itens_2l"); 
+            IncrementarGarrafasFirebase("itens_2l"); 
+            IncrementarPontosFirebase("itens_2l"); 
         }
         
         delay(5000);
 
-        //if(!sensor02){
         if(true){
             //digitalWrite(led2, HIGH);
-            IncrementarValorFirebase("itens_500ml");
+            IncrementarGarrafasFirebase("itens_500ml");
+            IncrementarPontosFirebase("itens_500ml");
         }
     }
 }
 
-void IncrementarValorFirebase(String sensor) {
-    String ID_FIXO = "43803050-223c-11ed-8a48-e1d138bf087e";
-    
+void IncrementarGarrafasFirebase(String sensor) {
     std::vector<struct fb_esp_firestore_document_write_t> writes;
-
+  
     struct fb_esp_firestore_document_write_t transform_write;
     transform_write.type = fb_esp_firestore_document_write_type_transform;
     
@@ -116,6 +115,40 @@ void IncrementarValorFirebase(String sensor) {
     FirebaseJson values;
     
     values.set("integerValue", "1"); // incrementa 1 no valor que estiver no Firebase
+    
+    field_transforms.transform_content = values.raw();
+    
+    transform_write.document_transform.field_transforms.push_back(field_transforms);
+    
+    writes.push_back(transform_write);
+    
+    if (Firebase.Firestore.commitDocumentAsync(&fbdo, FIREBASE_PROJECT_ID, "", writes , ""))
+        Serial.println("ok");
+    else
+        Serial.println(fbdo.errorReason());
+}
+
+void IncrementarPontosFirebase(String sensor) {
+    std::vector<struct fb_esp_firestore_document_write_t> writes;
+  
+    struct fb_esp_firestore_document_write_t transform_write;
+    transform_write.type = fb_esp_firestore_document_write_type_transform;
+    
+    transform_write.document_transform.transform_document_path = "usuarios/" + ID_FIXO;
+    
+    struct fb_esp_firestore_document_write_field_transforms_t field_transforms;
+    
+    field_transforms.fieldPath = "pontos";
+    
+    field_transforms.transform_type = fb_esp_firestore_transform_type_increment;
+    
+    FirebaseJson values;
+
+    if (sensor == "itens_500ml") {    
+      values.set("integerValue", "5");
+    } else {
+      values.set("integerValue", "20");
+    }
     
     field_transforms.transform_content = values.raw();
     
